@@ -23,7 +23,7 @@ def findSigClippedSignal(image, sig):
     std = stdDev(image)
     return np.mean(np.clip(image, mean-sig*std, mean+sig*std))
 
-#Begin used functions
+'''Used functions for PTC generation'''
 
 #subtracts averaged offset from raw image (pixel by pixel subtraction)
 def subtractOffset(image, offsetImage): 
@@ -57,6 +57,26 @@ def findData(imageList):
     error = np.std(std_devs)
     
     return [avg_std_dev, avg_mean_signal, error]
+
+def findSvNData(imageList):
+    imageArray = np.array(imageList)  # Convert to NumPy array
+    
+    # Check which images have both pixels < 50 and > 250 (removes image with bright whte strip)
+    mask_invalid = np.any(imageArray < 100, axis=(1, 2)) & np.any(imageArray > 250, axis=(1, 2))
+    valid_images = imageArray[~mask_invalid]
+    #catch so program doesn't fail if a stack of images all has the white strip
+    if valid_images.size == 0:
+        return [1, 1, 1]
+
+    mean_signals = np.mean(valid_images, axis=(1, 2))  # List with signal for each image
+    std_devs = np.std(valid_images, axis=(1, 2))      # List with noise(std dev) for each image
+    SvNs = np.divide(mean_signals, std_devs)  # Calculate signal to noise ratio
+    #average the signal and noise for the illumination level and find error in the noise
+    avg_mean_signal = np.mean(mean_signals)
+    avg_SvN = np.mean(SvNs)  # Calculate signal to noise ratio
+    error = np.std(SvNs)
+    
+    return [avg_SvN, avg_mean_signal, error]
 
 def findVarData(imageList):
     imageArray = np.array(imageList)  # Convert to NumPy array
@@ -158,12 +178,70 @@ def shotAndRead(FF_Image, u_FF, imArray):
     corr = u_FF*(imArray / FF_Image)
     return corr
 
-#calculates slop of lines in a log-log plot ignoring saturated images
+'''returns quantum efficiency of a camera in e-/photon'
+Luminance: W/m^2, Signal: e-, Exposure: s, Wavelength: m, Area: m^2'''
+def QuantumEff(Luminance, Signals, Exposures, Wavelength, Area):
+    #Calculate incident photon flux
+    fluxes = (Luminance * Exposures * Area)/ (((6.62607015 * 10 ** -34) * (3 * 10 ** 8)) / Wavelength)
+    #Calculate quantum efficiency
+    qes = [(Signals[i]) / fluxes[i] for i in range(len(fluxes)) if i > 4 and i < (len(fluxes) - 3)]
+    print("qes: ", qes)
+    return np.mean(qes)
+#Used for curve fitting
+def linear_func(log_x, slope, intercept):
+        return slope * log_x + intercept
+#calculates slope of lines in a log-log plot
 def compute_slope(x, y):
     log_x = np.log10(x)
     log_y = np.log10(y)
-    return (log_y[-3] - log_y[10]) / (log_x[-3] - log_x[10])
+    start = len(log_x) // 2
+    end = len(log_x) - 4
 
+    # Compute slope
+    slope = (log_y[end] - log_y[start]) / (log_x[end] - log_x[start])
+
+    return slope
 #calculates slop of lines in a log-log plot ignoring saturated images
 def compute_var_slope(x, y):
-    return (y[10] - y[5]) / (x[10] - x[5])
+    start = len(x)//2
+    end = len(x) - 4
+    slope = (y[end] - y[start]) / (x[end] - x[start])
+    
+    return slope
+
+def nonlinearityPoint(x, y):
+    """
+    Finds the x-value just before the y-values drop and do not recover.
+
+    Args:
+        x (array-like): X data values.
+        y (array-like): Y data values.
+
+    Returns:
+        float: X-value before the drop.
+    """
+    y = np.array(y)
+    
+    # Iterate to find the first major drop
+    for i in range(1, len(y)):
+        if y[i] < y[i - 1]:  # Drop detected
+            # If this is the last point, return the previous x-value
+            if i == len(y) - 1:
+                return x[i - 1]
+            
+            # Check if the drop is sustained
+            if all(y[j] <= y[i] for j in range(i, len(y))):
+                return x[i - 1]  # Return the last stable x-value before the drop
+
+    return x[-1]  # If no drop found, return the last x-value
+def maxStoN(x, y):
+    log_x = np.log10(x)
+    log_y = np.log10(y)
+    
+    slope = (log_y[-4] - log_y[6]) / (log_x[-4] - log_x[6])
+    for i in range(len(log_x)//2, len(log_x) - 1):
+        new_slope = (log_y[i] - log_y[i-1]) / (log_x[i] - log_x[i-1])
+        if abs(new_slope - slope) > slope * 0.5:
+            return y[i-1]
+    print("maxStoN: ", y[-1])
+    return y[-1]

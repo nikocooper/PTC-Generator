@@ -29,7 +29,7 @@ def extractFitsCubes(folderPath):
     
     return stacked_images
 
-
+# returns the mean image of each cube in a folder
 def extractMeanFromCubes(folderPath):
     fitsFiles = glob.glob(os.path.join(folderPath, "*.fits"))
     imageList = []
