@@ -37,7 +37,7 @@ def sigClippedMeanImage(imageList, sig):
     clippedImageList = [np.clip(image, mean-sig*std, mean+sig*std) for image in imageList]
     return np.mean(clippedImageList, axis=0)
 
-
+#Extracts noise, signal, and error in for each PTC data point
 def findData(imageList):
     imageArray = np.array(imageList)  # Convert to NumPy array
     
@@ -58,6 +58,7 @@ def findData(imageList):
     
     return [avg_std_dev, avg_mean_signal, error]
 
+#Extracts Singal to noise ratio, signal, and error for each PTC data point
 def findSvNData(imageList):
     imageArray = np.array(imageList)  # Convert to NumPy array
     
@@ -78,6 +79,7 @@ def findSvNData(imageList):
     
     return [avg_SvN, avg_mean_signal, error]
 
+#Extracts variance, signal, and error for each PTC data point
 def findVarData(imageList):
     imageArray = np.array(imageList)  # Convert to NumPy array
     
@@ -98,27 +100,27 @@ def findVarData(imageList):
     
     return [avg_variance, avg_mean_signal, error]
 
-''' Calculate shot noise for each illumination level'
-shotAndReadNoiseArray: [[stdDev1, signal1, error1], [stdDev2, signal2, error2], ...]
-readNoise: float'''
-def shotVar(shotAndReadNoiseArray, readNoise): 
-    #Extract noise and error
-    shotAndReadNoise = shotAndReadNoiseArray[:, 0]
+''' Calculate shot noise variance for each illumination level'
+shotAndReadVarArray: [[stdDev1, signal1, error1], [stdDev2, signal2, error2], ...]
+readVar: float'''
+def shotVar(shotAndReadVarArray, readVar): 
+    #Extract variance and error
+    shotAndReadVar = shotAndReadVarArray[:, 0]
     errors_SR = shotAndReadNoiseArray[:, 2]
 
-    #Compute shot noise using N_shot = sqrt(N_shot+read ** 2 - N_read ** 2)
-    diff = shotAndReadNoise - readNoise
+    #Compute shot noise variance using N_shot = sqrt(N_shot+read ** 2 - N_read ** 2)
+    diff = shotAndReadVar - readVar
     diff = np.maximum(diff, 0.001)  # Prevent negative values
-    shotNoise = diff
+    shotVar = diff
 
     # Error propagation formula
-    errors_S = np.abs(shotAndReadNoise / shotNoise) * errors_SR  
+    errors_S = np.abs(shotAndReadVar / shotVar) * errors_SR  
 
     # Create output array with propagated errors
-    shotNoiseArray = shotAndReadNoiseArray.copy()
-    shotNoiseArray[:, 0] = shotNoise
-    shotNoiseArray[:, 2] = errors_S 
-    return shotNoiseArray
+    shotVarArray = shotAndReadVarArray.copy()
+    shotVarArray[:, 0] = shotVar
+    shotVarArray[:, 2] = errors_S 
+    return shotVarArray
 
 ''' Calculate shot noise for each illumination level'
 shotAndReadNoiseArray: [[stdDev1, signal1, error1], [stdDev2, signal2, error2], ...]
@@ -142,6 +144,7 @@ def shotNoise(shotAndReadNoiseArray, readNoise):
     shotNoiseArray[:, 2] = errors_S 
 
     return shotNoiseArray
+    
 ''' Calculate fpn for each illumination level'
 shotAndReadNoiseArray: [[stdDev1, signal1, error1], [stdDev2, signal2, error2], ...]
 totalNoiseArray: [[stdDev1, signal1, error1], [stdDev2, signal2, error2], ...]'''
@@ -185,11 +188,8 @@ def QuantumEff(Luminance, Signals, Exposures, Wavelength, Area):
     fluxes = (Luminance * Exposures * Area)/ (((6.62607015 * 10 ** -34) * (3 * 10 ** 8)) / Wavelength)
     #Calculate quantum efficiency
     qes = [(Signals[i]) / fluxes[i] for i in range(len(fluxes)) if i > 4 and i < (len(fluxes) - 3)]
-    print("qes: ", qes)
     return np.mean(qes)
-#Used for curve fitting
-def linear_func(log_x, slope, intercept):
-        return slope * log_x + intercept
+    
 #calculates slope of lines in a log-log plot
 def compute_slope(x, y):
     log_x = np.log10(x)
@@ -201,6 +201,7 @@ def compute_slope(x, y):
     slope = (log_y[end] - log_y[start]) / (log_x[end] - log_x[start])
 
     return slope
+    
 #calculates slop of lines in a log-log plot ignoring saturated images
 def compute_var_slope(x, y):
     start = len(x)//2
@@ -234,6 +235,7 @@ def nonlinearityPoint(x, y):
                 return x[i - 1]  # Return the last stable x-value before the drop
 
     return x[-1]  # If no drop found, return the last x-value
+#finds the signal to noise limit by searching for large changes in slope in the second half of the plot
 def maxStoN(x, y):
     log_x = np.log10(x)
     log_y = np.log10(y)
