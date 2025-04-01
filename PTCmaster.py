@@ -58,7 +58,7 @@ def generator(offsetImagesFolder, PTCPointsFolder, flatFieldsFolder):
     fig.canvas.draw()
     # Show the combined figure
     plt.tight_layout()
-    fig.subplots_adjust(wspace=0.3, hspace=0.3)
+    fig.subplots_adjust(wspace=0.3, hspace=0.3, bottom=0.15)
     plt.show()
 
 generator(r"C:\Users\nocoo\Downloads\twoLights\VIS\offsets",r"C:\Users\nocoo\Downloads\twoLights\VIS\lights",r"C:\Users\nocoo\Downloads\twoLights\VIS\flats")

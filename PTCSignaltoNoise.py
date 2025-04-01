@@ -55,7 +55,7 @@ def SvNPTCGen(offsetImageList, PTCImages, fpnReduced, sensitivity, fig):
     readNoise = np.mean(np.std(offsetImageList, axis = 0))
 
     # extract flatfields and average into one flat field, then find mean signal of the resultant flatfield
-    FF_image = fpnReduced[0]
+    FF_image = ptcm.subtractOffset(fpnReduced[0], offsetImage)
     u_FF = np.mean(FF_image)
 
     #subtract offset from each image
