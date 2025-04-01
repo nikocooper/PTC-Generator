@@ -60,5 +60,5 @@ def generator(offsetImagesFolder, PTCPointsFolder, flatFieldsFolder):
     plt.tight_layout()
     fig.subplots_adjust(wspace=0.3, hspace=0.3, bottom=0.15)
     plt.show()
-
+#function call to run program, insert correct folder paths
 generator(<path_to_offsets>, <path_to_illuminated_images>, <path_to_flats>)
