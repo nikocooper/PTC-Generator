@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import importlib
 importlib.reload(ptcm)
 
-'''Plots Shot + read noise PTC
+'''Plots Shot + read noise variance PTC
 ax: axis to plot on
 points: [[stdDev1, signal1, error1], [stdDev2, signal2, error2], ...]
 '''
@@ -15,10 +15,10 @@ def shotAndReadPTC(ax,points):
     variance, signals, errors = points[:, 0], points[:, 1], points[:, 2]
 
 
-    #sets log-log plot with error
+    #sets plot with error
     ax.errorbar(signals, variance, yerr=errors, fmt='o', label="Shot & Read Noise", capsize=5, capthick=1, elinewidth=1, linestyle = 'dashed')
 
-'''Plots Shot noise PTC
+'''Plots Shot noise variance PTC
 ax: axis to plot on
 points: [[stdDev1, signal1, error1], [stdDev2, signal2, error2], ...]
 '''
@@ -27,16 +27,16 @@ def shotPTC(ax, points):
     variance, signals, errors = points[:, 0], points[:, 1], points[:, 2]
 
 
-    #sets log-log plot with error
+    #sets plot with error
     ax.errorbar(signals, variance, yerr=errors, fmt='o', label="Shot Noise", capsize=5, capthick=1, elinewidth=1, linestyle = 'dashdot')
 
-    #compute slope of shot noise line in log-log coordinates
-    slope = ptcm.compute_var_slope(signals, variance)
+    #compute slope and associated error of shot noise line
+    slope, err = ptcm.compute_var_slope(signals, variance)
     ax.text(signals[len(signals)//2], variance[len(variance)//2],
-             f"Slope: {slope:.2f}", fontsize=10, color='black')
-    return 1/slope
+             f"Slope: {slope:.2f} +/- {err:.4f}", fontsize=10, color='black')
+    return 1/slope, err/(slope ** 2)
 
-'''Plots total noise PTC
+'''Plots total noise variance PTC
 ax: axis to plot on
 points: [[stdDev1, signal1, error1], [stdDev2, signal2, error2], ...]
 '''
@@ -70,16 +70,16 @@ def VarPTCGen(offsetImageList, PTCImages, fpnReduced, fig):
     #subtract offset from each image
     PTCData = [ptcm.subtractOffset(img, offsetImage) for img in PTCImages]
 
-    # calculate data for total noise and sort by increasing signal
+    # calculate data for total noise variance and sort by increasing signal
     totalVarPoints = np.array([ptcm.findVarData(point) for point in PTCData])
     sortedtotalVarPoints = totalVarPoints[np.argsort(totalVarPoints[:, 1])]
 
     # generate corrected image by pulling fpn out with flatfielding for each image
     noMoreFPN = ptcm.shotAndRead(FF_image, u_FF, np.array(PTCData))
-    # calculate total noise from corrected image once fpn is subtracted and sort by increasing signal
+    # calculate shot+read noise variance from corrected image once fpn is subtracted and sort by increasing signal
     shotAndReadVar = np.array([ptcm.findVarData(point) for point in noMoreFPN])
     sortedShotAndReadVar = shotAndReadVar[np.argsort(shotAndReadVar[:, 1])]
-    #calculate shot noise by subtracting read noise from shot+read noise in quadrature
+    #calculate shot noise variance by subtracting read noise from shot+read noise in quadrature
     shotPoints = ptcm.shotVar(sortedShotAndReadVar, readVar)
     #generate PTCs on one plot with error
     ax = fig.axes[0]
@@ -87,7 +87,7 @@ def VarPTCGen(offsetImageList, PTCImages, fpnReduced, fig):
     shotAndReadPTC(ax, sortedShotAndReadVar)
 
     #compute sensitivity as the inverse of the slope of the shot noise line
-    sens = shotPTC(ax, shotPoints)
+    sens, err = shotPTC(ax, shotPoints)
     ax.legend()
     fig.canvas.draw()
-    return sens
+    return (sens, err)

@@ -1,14 +1,11 @@
+'''
+This file contains all the functions necessary to pull data from
+fits cubes in folders and format them in the necessary manner.
+'''
 import glob
 import os
 import numpy as np
 from astropy.io import fits
-
-#extracts 2d fits files from a folder
-def extractFits(folderPath):
-    fitsFiles = glob.glob(os.path.join(folderPath, "*.fits"))
-    imageList = np.array([fits.getdata(file) for file in fitsFiles])
-    print(f"Loaded {len(imageList)} FITS files")
-    return imageList
 
 #extracts 3d fits files from a folder
 def extractFitsCubes(folderPath):

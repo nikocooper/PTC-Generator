@@ -15,6 +15,7 @@ sensitivity: K_adc(e-/DN)
 def shotAndReadPTC(ax, points, sensitivity):
     SvNs, signals, errors = points[:, 0], points[:, 1], points[:, 2]
 
+    #convert signal to e- units
     signals = signals * sensitivity
     #sets log-log plot with error
     ax.errorbar(signals, SvNs, yerr=errors, fmt='o', label="Shot & Read Noise", capsize=5, capthick=1, elinewidth=1, linestyle = 'dashed')
@@ -30,6 +31,7 @@ sensitivity: K_adc(e-/DN)
 def totalNoisePTC(ax, points, sensitivity):
     SvNs, signals, errors = points[:, 0], points[:, 1], points[:, 2]
 
+    #convert signal to e- units
     signals = signals * sensitivity
     ax.errorbar(signals, SvNs, yerr=errors, fmt='o', label="Total Noise", capsize=5, capthick=1, elinewidth=1, linestyle = 'solid')
 
@@ -50,9 +52,8 @@ sensitivity: K_adc(e-/DN)
 fig: the figure to plot on
 '''
 def SvNPTCGen(offsetImageList, PTCImages, fpnReduced, sensitivity, fig):
-    # average offset images into one, calculate read noise
+    # average offset images into one
     offsetImage = np.array(ptcm.sigClippedMeanImage(offsetImageList, 3))
-    readNoise = np.mean(np.std(offsetImageList, axis = 0))
 
     # extract flatfields and average into one flat field, then find mean signal of the resultant flatfield
     FF_image = ptcm.subtractOffset(fpnReduced[0], offsetImage)
@@ -69,11 +70,11 @@ def SvNPTCGen(offsetImageList, PTCImages, fpnReduced, sensitivity, fig):
     # calculate signal vs noise from corrected image once fpn is subtracted and sort by increasing signal
     shotAndReadNoise = np.array([ptcm.findSvNData(point) for point in noMoreFPN])
     sortedShotAndReadNoise = shotAndReadNoise[np.argsort(shotAndReadNoise[:, 1])]
-    StoNlim = ptcm.maxStoN(sortedShotAndReadNoise[:, 1], sortedShotAndReadNoise[:, 0])
+    StoNlim, err = ptcm.maxStoN(sortedShotAndReadNoise[:, 1], sortedShotAndReadNoise[:, 0])
     #generate PTCs on one log-log plot with error
     ax = fig.axes[2]
     totalNoisePTC(ax, sortedtotalNoisePoints, sensitivity)
     shotAndReadPTC(ax, sortedShotAndReadNoise, sensitivity)
     ax.legend()
     fig.canvas.draw()
-    return StoNlim
+    return (StoNlim, err)

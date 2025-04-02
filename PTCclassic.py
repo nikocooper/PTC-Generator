@@ -46,10 +46,10 @@ def shotPTC(ax, points, sensitivity):
     ax.set_xscale("log")
     ax.set_yscale("log")
 
-    #compute slope of shot noise line in log-log coordinates
-    slope = ptcm.compute_slope(signals, stdDevs)
+    #compute slope and associated error of shot noise line in log-log coordinates
+    slope, err = ptcm.compute_slope(signals, stdDevs)
     ax.text(signals[len(signals)//4], stdDevs[len(stdDevs)//4],
-             f"Slope: {slope:.2f}", fontsize=10, color='black')
+             f"Slope: {slope:.2f} +/- {err:.4f}", fontsize=10, color='black')
 '''Plots fpn PTC
 ax: axis to plot on
 points: [[stdDev1, signal1, error1], [stdDev2, signal2, error2], ...]
@@ -68,11 +68,11 @@ def fpnPTC(ax, points, sensitivity):
     ax.set_xscale("log")
     ax.set_yscale("log")
 
-    #compute slope of fpn line in log-log coordinates
-    slope = ptcm.compute_slope(signals, stdDevs)
+    #compute slope and associated error of fpn line in log-log coordinates
+    slope, err = ptcm.compute_slope(signals, stdDevs)
 
     ax.text(signals[len(signals)//2], stdDevs[len(stdDevs)//2],
-             f"Slope: {slope:.2f}", fontsize=10, color='black')
+             f"Slope: {slope:.2f} +/- {err:.4f}", fontsize=10, color='black')
     
 '''Plots total noise PTC
 ax: axis to plot on
@@ -81,7 +81,7 @@ sensitivity: K_adc(e-/DN)
 '''
 def totalNoisePTC(ax, points, sensitivity):
     stdDevs, signals, errors = points[:, 0], points[:, 1], points[:, 2]
-    #applies sensotovoty to each data point, using A = K_adc(e-/DN)* B for noise, signal, and error
+    #applies sensitivity to each data point, using A = K_adc(e-/DN)* B for noise, signal, and error
     signals = signals * sensitivity
     stdDevs = stdDevs * sensitivity
     errors = errors * sensitivity
@@ -106,6 +106,7 @@ def PTCGen(offsetImageList, PTCImages, fpnReduced, sensitivity, fig):
     # average offset images into one, calculate read noise
     offsetImage = np.array(ptcm.sigClippedMeanImage(offsetImageList, 3))
     readNoise = np.mean(np.std(offsetImageList, axis = 0))
+    readNoise_err = np.std(np.std(offsetImageList, axis = 0)) 
 
     # extract flatfields and average into one flat field, then find mean signal of the resultant flatfield
     FF_image = ptcm.subtractOffset(fpnReduced[0], offsetImage)
@@ -127,10 +128,11 @@ def PTCGen(offsetImageList, PTCImages, fpnReduced, sensitivity, fig):
     fpnPoints = ptcm.fpn(sortedShotAndReadNoise, sortedtotalNoisePoints)
     #calculate shot noise by subtracting read noise from shot+read noise in quadrature
     shotPoints = ptcm.shotNoise(sortedShotAndReadNoise, readNoise)
-    fullWell =  ptcm.nonlinearityPoint(fpnPoints[:, 1], fpnPoints[:, 0])
+    fullWell, fullWell_err =  ptcm.nonlinearityPoint(fpnPoints[:, 1], fpnPoints[:, 0])
     #calculate FPN quality factor for each data point using Pn = FPN / Signal and average them.
     Pns = [fpnPoints[i][0]/fpnPoints[i][1] for i in range(len(fpnPoints)) if i > 6 and i < (len(fpnPoints) - 4)]
     np.clip(Pns, np.mean(Pns) - 2 * np.std(Pns), np.mean(Pns) + 2 * np.std(Pns))
+    Pn_err = np.std(Pns)
     Pn = np.mean(Pns)
     #generate PTCs for each noise on one log-log plot with error
     ax = fig.axes[1]
@@ -142,4 +144,4 @@ def PTCGen(offsetImageList, PTCImages, fpnReduced, sensitivity, fig):
     ax.axhline(readNoise * sensitivity, linestyle="--", color="purple", alpha=0.7, label="Read Noise")
     ax.legend()
     fig.canvas.draw()
-    return readNoise, Pn, fullWell
+    return (readNoise, readNoise_err), (Pn, Pn_err), (fullWell, fullWell_err)

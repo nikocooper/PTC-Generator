@@ -1,3 +1,8 @@
+'''
+This program performs all the necessary calculations for PTC generation.
+All estimates for error are either std deviation, or in the case of slope
+or point values, half the distance to the surrounding points.
+'''
 import numpy as np
 
 #averages a list of images into one mean image pixel by pixel
@@ -106,7 +111,7 @@ readVar: float'''
 def shotVar(shotAndReadVarArray, readVar): 
     #Extract variance and error
     shotAndReadVar = shotAndReadVarArray[:, 0]
-    errors_SR = shotAndReadNoiseArray[:, 2]
+    errors_SR = shotAndReadVarArray[:, 2]
 
     #Compute shot noise variance using N_shot = sqrt(N_shot+read ** 2 - N_read ** 2)
     diff = shotAndReadVar - readVar
@@ -181,8 +186,12 @@ def shotAndRead(FF_Image, u_FF, imArray):
     corr = u_FF*(imArray / FF_Image)
     return corr
 
-'''returns quantum efficiency of a camera in e-/photon'
-Luminance: W/m^2, Signal: e-, Exposure: s, Wavelength: m, Area: m^2'''
+'''
+returns quantum efficiency of a camera in e-/photon'
+Luminance: W/m^2, Signal: e-, Exposure: s, Wavelength: m, Area: m^2
+Not implemented, but can be used given input parameters to find QE for 
+narrowband light source
+'''
 def QuantumEff(Luminance, Signals, Exposures, Wavelength, Area):
     #Calculate incident photon flux
     fluxes = (Luminance * Exposures * Area)/ (((6.62607015 * 10 ** -34) * (3 * 10 ** 8)) / Wavelength)
@@ -190,40 +199,36 @@ def QuantumEff(Luminance, Signals, Exposures, Wavelength, Area):
     qes = [(Signals[i]) / fluxes[i] for i in range(len(fluxes)) if i > 4 and i < (len(fluxes) - 3)]
     return np.mean(qes)
     
-#calculates slope of lines in a log-log plot
+#calculates slope of lines in a log-log plot ignoring saturated images
 def compute_slope(x, y):
     log_x = np.log10(x)
     log_y = np.log10(y)
     start = len(log_x) // 2
     end = len(log_x) - 4
 
-    # Compute slope
-    slope = (log_y[end] - log_y[start]) / (log_x[end] - log_x[start])
-
-    return slope
+    # Compute slope and error
+    slopes = [(log_y[i + 1] - log_y[i]) / (log_x[i + 1] - log_x[i]) for i in range(start, end)]
+    np.clip(slopes, np.mean(slopes) - np.std(slopes) * 2, np.mean(slopes) + np.std(slopes) * 2)
+    return np.mean(slopes), np.std(slopes)
     
-#calculates slop of lines in a log-log plot ignoring saturated images
+#calculates slope of lines in a plot ignoring saturated images
 def compute_var_slope(x, y):
-    start = len(x)//2
+    start = len(x) // 2
     end = len(x) - 4
-    slope = (y[end] - y[start]) / (x[end] - x[start])
-    
-    return slope
 
+    #compute slope and error
+    slopes = [(y[i + 1] - y[i]) / (x[i + 1] - x[i]) for i in range(start, end)]
+    np.clip(slopes, np.mean(slopes) - np.std(slopes) * 2, np.mean(slopes) + np.std(slopes) * 2)
+    return np.mean(slopes), np.std(slopes)
+
+"""
+Finds the x-value just before the y-values drop and do not recover.
+Error estimate (half the distance between the detected change and the surrounding points).
+"""
 def nonlinearityPoint(x, y):
-    """
-    Finds the x-value just before the y-values drop and do not recover.
-
-    Args:
-        x (array-like): X data values.
-        y (array-like): Y data values.
-
-    Returns:
-        float: X-value before the drop.
-    """
     y = np.array(y)
     
-    # Iterate to find the first major drop
+    #find the first major drop
     for i in range(1, len(y)):
         if y[i] < y[i - 1]:  # Drop detected
             # If this is the last point, return the previous x-value
@@ -232,18 +237,24 @@ def nonlinearityPoint(x, y):
             
             # Check if the drop is sustained
             if all(y[j] <= y[i] for j in range(i, len(y))):
-                return x[i - 1]  # Return the last stable x-value before the drop
+                # Return the last stable x-value before the drop
+                return x[i - 1], ((x[i] - x[i-1])/2 + (x[i-1] - x[i-2])/2)/2
+    # If no drop found, return the last x value
+    return x[-1], (x[-1] - x[-2])/2
 
-    return x[-1]  # If no drop found, return the last x-value
-#finds the signal to noise limit by searching for large changes in slope in the second half of the plot
+'''
+finds the signal to noise limit by searching for large changes in slope in the second half of the plot
+error calculated as half the distance between the detected change and the last point.
+'''
 def maxStoN(x, y):
     log_x = np.log10(x)
     log_y = np.log10(y)
-    
+    #find estimated linear slope in log space
     slope = (log_y[-4] - log_y[6]) / (log_x[-4] - log_x[6])
+    #find deviation point from estimated slope
     for i in range(len(log_x)//2, len(log_x) - 1):
         new_slope = (log_y[i] - log_y[i-1]) / (log_x[i] - log_x[i-1])
         if abs(new_slope - slope) > slope * 0.5:
-            return y[i-1]
-    print("maxStoN: ", y[-1])
-    return y[-1]
+            return y[i-1], (y[i-1] - y[i-2]) / 2
+    #if no deviation, return y value
+    return y[-1], (y[-1] - y[-2]) / 2
