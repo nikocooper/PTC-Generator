@@ -145,7 +145,7 @@ def shotNoise(shotAndReadNoiseArray, readNoise, readNoise_err):
     shotNoise = np.sqrt(diff)
 
     # Error propagation formula
-    errors_S = (1 / (2 * shotVar)) * np.sqrt((2 * shotAndReadNoise * errors_SR) ** 2 + (2 * readNoise * readNoise_err) ** 2)
+    errors_S = (1 / (2 * shotNoise)) * np.sqrt((2 * shotAndReadNoise * errors_SR) ** 2 + (2 * readNoise * readNoise_err) ** 2)
 
     # Create output array with propagated errors
     shotNoiseArray = shotAndReadNoiseArray.copy()
