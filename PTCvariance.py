@@ -61,8 +61,9 @@ fig: the figure to plot on
 def VarPTCGen(offsetImageList, PTCImages, fpnReduced, fig):
     # average offset images into one, calculate read noise
     offsetImage = np.array(ptcm.sigClippedMeanImage(offsetImageList, 3))
-    readVar = np.mean(np.var(offsetImageList, axis = 0))
-    readVar_err = np.std(np.var(offsetImageList, axis = 0)) 
+    #calculate read noise variance per image for averaging and error calculation
+    readVar = np.mean(np.var(offsetImageList, axis = (1,2)))
+    readVar_err = np.std(np.var(offsetImageList, axis = (1,2))) 
 
     # extract flatfields and average into one flat field, then find mean signal of the resultant flatfield
     FF_image = ptcm.subtractOffset(fpnReduced[0], offsetImage)
