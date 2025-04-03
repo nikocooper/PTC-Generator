@@ -78,4 +78,3 @@ def generator(offsetImagesFolder, PTCPointsFolder, flatFieldsFolder):
     plt.show()
 #function call to run program, insert correct folder paths
 #generator(<path_to_offsets>, <path_to_illuminated_images>, <path_to_flats>)
-generator(r"C:\Users\nocoo\Downloads\twoLights\VIS\offsets", r"C:\Users\nocoo\Downloads\twoLights\VIS\lights", r"C:\Users\nocoo\Downloads\twoLights\VIS\flats")
