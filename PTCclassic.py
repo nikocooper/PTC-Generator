@@ -108,7 +108,6 @@ def PTCGen(offsetImageList, PTCImages, fpnReduced, sensitivity, fig):
     #calculate read noise per image for averaging and error calculation
     readNoise = np.mean(np.std(offsetImageList, axis = (1,2)))
     readNoise_err = np.std(np.std(offsetImageList, axis = (1,2)))
-    print(readNoise, readNoise_err, np.std(offsetImageList, axis = (1,2)))
     # extract flatfields and average into one flat field, then find mean signal of the resultant flatfield
     FF_image = ptcm.subtractOffset(fpnReduced[0], offsetImage)
     u_FF = np.mean(FF_image)
