@@ -32,7 +32,7 @@ def generator(offsetImagesFolder, PTCPointsFolder, flatFieldsFolder):
 
     # create figure for plotting PTCs
     fig, _ = plt.subplots(2, 2, figsize=(14, 12))
-    
+
     # Generate PTCs and extract data
     (sensitivity, sensErr) = PTCV.VarPTCGen(offsetImageList, PTCImages, fpnReduced, fig)
     (readNoise, readNoise_err), (Pn, Pn_err), (fullWell, fullWell_err) = PTCC.PTCGen(offsetImageList, PTCImages, fpnReduced, sensitivity, fig)
@@ -49,27 +49,27 @@ def generator(offsetImagesFolder, PTCPointsFolder, flatFieldsFolder):
     # Add extracted values to the text figure with propogated errors
     ax_text.text(0.5, 0.75, 'Camera Characterization Results', ha='center', va='center', fontsize=12, fontweight='bold')
 
-    ax_text.text(0.5, 0.65, 'Minimum Detectable Signal (e-): ' + str(round((1+np.sqrt(1+4*(readNoise*sensitivity)**2))/2,2)) + "+/-" + \
+    ax_text.text(0.5, 0.65, 'Minimum Detectable Signal (e-): ' + str(round((1+np.sqrt(1+4*(readNoise*sensitivity)**2))/2,2)) + " +/- " + \
         str(round( ((2 * readNoise * sensitivity) / np.sqrt(1 + 4 * (readNoise * sensitivity)**2)) * np.sqrt( \
-            (readNoise_err * sensitivity)**2 + (sensErr * readNoise)**2),2)), ha='center', va='center', fontsize=8)
+            (readNoise_err * sensitivity)**2 + (sensErr * readNoise)**2),3)), ha='center', va='center', fontsize=8)
     
-    ax_text.text(0.5, 0.55, 'Signal to Noise Limit (dB): ' + str(round(20*np.log10(StoNlim),2)) + "+/-" + \
+    ax_text.text(0.5, 0.55, 'Signal to Noise Limit (dB): ' + str(round(20*np.log10(StoNlim),2)) + " +/- " + \
         str(round(((20*svn_err)/(StoNlim*np.log(10))),2)), ha='center', va='center', fontsize=8)
     
     ax_text.text(0.5, 0.45, 'Dynamic Range (dB): ' + str(round(20 * np.log10(fullWell / readNoise), 2)) +" +/- " + \
         str(round((20 / np.log(10)) * np.sqrt((fullWell_err / fullWell)**2 + (readNoise_err / readNoise)**2), 2)), \
             ha='center', va='center', fontsize=8)
     
-    ax_text.text(0.5, 0.35, 'Full Well (e-): ' + str(round((fullWell * sensitivity), 2)) + "+/-" + str(round((fullWell*sensitivity* \
+    ax_text.text(0.5, 0.35, 'Full Well (e-): ' + str(round((fullWell * sensitivity), 2)) + " +/- " + str(round((fullWell*sensitivity* \
         np.sqrt((fullWell_err/fullWell)**2+ (sensErr/sensitivity)**2)),2)), ha='center', va='center', fontsize=8)
     
-    ax_text.text(0.5, 0.25, "Sensitivity (e-/DN): " + str(round(sensitivity, 2)) + "+/-" + str(round(sensErr,2)), \
+    ax_text.text(0.5, 0.25, "Sensitivity (e-/DN): " + str(round(sensitivity, 2)) + " +/- " + str(round(sensErr,2)), \
         ha='center', va='center', fontsize=8)
     
-    ax_text.text(0.5, 0.15, "Pn: " + str(round(Pn*100,2)) + "+/-"  + str(round(Pn_err*100,2)) + "%", ha='center', va='center', fontsize=8)
+    ax_text.text(0.5, 0.15, "Pn: " + str(round(Pn*100,2)) + " +/- "  + str(round(Pn_err*100,2)) + "%", ha='center', va='center', fontsize=8)
 
-    ax_text.text(0.5, 0.05, 'Read Noise (e-): ' + str(round(readNoise * sensitivity,2)) + "+/-" + str(round((readNoise*sensitivity)* \
-        ((readNoise_err/readNoise)**2 + (sensErr/sensitivity)**2)**0.5, 2)), ha='center', va='center', fontsize=8)
+    ax_text.text(0.5, 0.05, 'Read Noise (e-): ' + str(round(readNoise * sensitivity,2)) + " +/- " + str(round((readNoise*sensitivity)* \
+        ((readNoise_err/readNoise)**2 + (sensErr/sensitivity)**3)**0.5, 6)), ha='center', va='center', fontsize=8)
 
     fig.canvas.draw()
     # Show the combined figure

@@ -127,7 +127,7 @@ def PTCGen(offsetImageList, PTCImages, fpnReduced, sensitivity, fig):
     # calculate fpn by subtracting shot+read noise from total noise in quadrature
     fpnPoints = ptcm.fpn(sortedShotAndReadNoise, sortedtotalNoisePoints)
     #calculate shot noise by subtracting read noise from shot+read noise in quadrature
-    shotPoints = ptcm.shotNoise(sortedShotAndReadNoise, readNoise)
+    shotPoints = ptcm.shotNoise(sortedShotAndReadNoise, readNoise, readNoise_err)
     fullWell, fullWell_err =  ptcm.nonlinearityPoint(fpnPoints[:, 1], fpnPoints[:, 0])
     #calculate FPN quality factor for each data point using Pn = FPN / Signal and average them.
     Pns = [fpnPoints[i][0]/fpnPoints[i][1] for i in range(len(fpnPoints)) if i > 6 and i < (len(fpnPoints) - 4)]

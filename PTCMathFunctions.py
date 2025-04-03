@@ -107,8 +107,10 @@ def findVarData(imageList):
 
 ''' Calculate shot noise variance for each illumination level'
 shotAndReadVarArray: [[stdDev1, signal1, error1], [stdDev2, signal2, error2], ...]
-readVar: float'''
-def shotVar(shotAndReadVarArray, readVar): 
+readVar: float
+readVar_err: float
+'''
+def shotVar(shotAndReadVarArray, readVar, readVar_err): 
     #Extract variance and error
     shotAndReadVar = shotAndReadVarArray[:, 0]
     errors_SR = shotAndReadVarArray[:, 2]
@@ -119,7 +121,7 @@ def shotVar(shotAndReadVarArray, readVar):
     shotVar = diff
 
     # Error propagation formula
-    errors_S = np.abs(shotAndReadVar / shotVar) * errors_SR  
+    errors_S = np.sqrt(errors_SR**2 + readVar_err**2)  
 
     # Create output array with propagated errors
     shotVarArray = shotAndReadVarArray.copy()
@@ -129,8 +131,10 @@ def shotVar(shotAndReadVarArray, readVar):
 
 ''' Calculate shot noise for each illumination level'
 shotAndReadNoiseArray: [[stdDev1, signal1, error1], [stdDev2, signal2, error2], ...]
-readNoise: float'''
-def shotNoise(shotAndReadNoiseArray, readNoise): 
+readNoise: float
+readNoise_err: float
+'''
+def shotNoise(shotAndReadNoiseArray, readNoise, readNoise_err): 
     #Extract noise and error
     shotAndReadNoise = shotAndReadNoiseArray[:, 0]
     errors_SR = shotAndReadNoiseArray[:, 2]
@@ -141,7 +145,7 @@ def shotNoise(shotAndReadNoiseArray, readNoise):
     shotNoise = np.sqrt(diff)
 
     # Error propagation formula
-    errors_S = np.abs(shotAndReadNoise / shotNoise) * errors_SR  
+    errors_S = (1 / (2 * shotVar)) * np.sqrt((2 * shotAndReadNoise * errors_SR) ** 2 + (2 * readNoise * readNoise_err) ** 2)
 
     # Create output array with propagated errors
     shotNoiseArray = shotAndReadNoiseArray.copy()

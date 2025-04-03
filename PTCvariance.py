@@ -62,6 +62,7 @@ def VarPTCGen(offsetImageList, PTCImages, fpnReduced, fig):
     # average offset images into one, calculate read noise
     offsetImage = np.array(ptcm.sigClippedMeanImage(offsetImageList, 3))
     readVar = np.mean(np.var(offsetImageList, axis = 0))
+    readVar_err = np.std(np.var(offsetImageList, axis = 0)) 
 
     # extract flatfields and average into one flat field, then find mean signal of the resultant flatfield
     FF_image = ptcm.subtractOffset(fpnReduced[0], offsetImage)
@@ -80,7 +81,7 @@ def VarPTCGen(offsetImageList, PTCImages, fpnReduced, fig):
     shotAndReadVar = np.array([ptcm.findVarData(point) for point in noMoreFPN])
     sortedShotAndReadVar = shotAndReadVar[np.argsort(shotAndReadVar[:, 1])]
     #calculate shot noise variance by subtracting read noise from shot+read noise in quadrature
-    shotPoints = ptcm.shotVar(sortedShotAndReadVar, readVar)
+    shotPoints = ptcm.shotVar(sortedShotAndReadVar, readVar, readVar_err)
     #generate PTCs on one plot with error
     ax = fig.axes[0]
     totalNoisePTC(ax, sortedtotalVarPoints)
