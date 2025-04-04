@@ -18,7 +18,7 @@ def shotAndReadPTC(ax, points, sensitivity):
     #convert signal to e- units
     signals = signals * sensitivity
     #sets log-log plot with error
-    ax.errorbar(signals, SvNs, yerr=errors, fmt='o', label="Shot & Read Noise", capsize=5, capthick=1, elinewidth=1, linestyle = 'dashed')
+    ax.errorbar(signals, SvNs, yerr=errors, fmt='o', label="Signal to Shot & Read Noise", capsize=5, capthick=1, elinewidth=1, linestyle = 'dashed')
     ax.set_xscale("log")
     ax.set_yscale("log")
 
@@ -33,7 +33,7 @@ def totalNoisePTC(ax, points, sensitivity):
 
     #convert signal to e- units
     signals = signals * sensitivity
-    ax.errorbar(signals, SvNs, yerr=errors, fmt='o', label="Total Noise", capsize=5, capthick=1, elinewidth=1, linestyle = 'solid')
+    ax.errorbar(signals, SvNs, yerr=errors, fmt='o', label=" Signal to Total Noise", capsize=5, capthick=1, elinewidth=1, linestyle = 'solid')
 
     #sets axes and labels
     ax.set_xscale("log")

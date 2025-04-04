@@ -237,7 +237,7 @@ def nonlinearityPoint(x, y):
         if y[i] < y[i - 1]:  # Drop detected
             # If this is the last point, return the previous x-value
             if i == len(y) - 1:
-                return x[i - 1]
+                return x[i - 1], (x[-1] - x[-2])/2
             
             # Check if the drop is sustained
             if all(y[j] <= y[i] for j in range(i, len(y))):

@@ -16,7 +16,7 @@ def shotAndReadPTC(ax,points):
 
 
     #sets plot with error
-    ax.errorbar(signals, variance, yerr=errors, fmt='o', label="Shot & Read Noise", capsize=5, capthick=1, elinewidth=1, linestyle = 'dashed')
+    ax.errorbar(signals, variance, yerr=errors, fmt='o', label="Shot & Read Noise Variance", capsize=5, capthick=1, elinewidth=1, linestyle = 'dashed')
 
 '''Plots Shot noise variance PTC
 ax: axis to plot on
@@ -28,7 +28,7 @@ def shotPTC(ax, points):
 
 
     #sets plot with error
-    ax.errorbar(signals, variance, yerr=errors, fmt='o', label="Shot Noise", capsize=5, capthick=1, elinewidth=1, linestyle = 'dashdot')
+    ax.errorbar(signals, variance, yerr=errors, fmt='o', label="Shot Noise Variance", capsize=5, capthick=1, elinewidth=1, linestyle = 'dashdot')
 
     #compute slope and associated error of shot noise line
     slope, err = ptcm.compute_var_slope(signals, variance)
@@ -43,7 +43,7 @@ points: [[stdDev1, signal1, error1], [stdDev2, signal2, error2], ...]
 def totalNoisePTC(ax, points):
     variance, signals, errors = points[:, 0], points[:, 1], points[:, 2]
 
-    ax.errorbar(signals, variance, yerr=errors, fmt='o', label="Total Noise", capsize=5, capthick=1, elinewidth=1, linestyle = 'solid')
+    ax.errorbar(signals, variance, yerr=errors, fmt='o', label="Total Noise Variance", capsize=5, capthick=1, elinewidth=1, linestyle = 'solid')
 
     ax.set_xlabel("Signal (DN)")
     ax.set_ylabel("Noise Variance (DN)")

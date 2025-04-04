@@ -1,5 +1,8 @@
 '''
+Author: Nikoli Cooper
+Date: 4/4/2025
 This script generates the PTC plots and calculates camera characterization parameters.
+A subarray is selected to reduce computation time. This subarray can be the entire array.
 It formats all plots on one matplotlib figure, and displays the results in a text box.
 '''
 import PTCclassic as PTCC
@@ -22,13 +25,15 @@ It takes in three folders:
 1. offsetImagesFolder: folder containing a 3d fits cube for offset calculation
 2. PTCPointsFolder: folder containing 3d fits cubes for each illumination level
 3. flatFieldsFolder: folder containing 3d fits cubes for flat field correction 
+4. rowIndex: tuple indicating the row range to analyze (start, end)
+5. colIndex: tuple indicating the column range to analyze (start, end)
 '''
-def generator(offsetImagesFolder, PTCPointsFolder, flatFieldsFolder):
+def generator(offsetImagesFolder, PTCPointsFolder, flatFieldsFolder, rowIndex, colIndex):
 
     # Extract data from the input folders
-    offsetImageList = PTCFL.extractFitsCubes(offsetImagesFolder)[0]
-    fpnReduced = PTCFL.extractMeanFromCubes(flatFieldsFolder)
-    PTCImages = PTCFL.extractFitsCubes(PTCPointsFolder)
+    offsetImageList = (PTCFL.extractFitsCubes(offsetImagesFolder)[0])[:, rowIndex[0]:rowIndex[1], colIndex[0]:colIndex[1]]
+    fpnReduced = (PTCFL.extractMeanFromCubes(flatFieldsFolder))[:, rowIndex[0]:rowIndex[1], colIndex[0]:colIndex[1]]
+    PTCImages = (PTCFL.extractFitsCubes(PTCPointsFolder))[:, :, rowIndex[0]:rowIndex[1], colIndex[0]:colIndex[1]]
 
     # create figure for plotting PTCs
     fig, _ = plt.subplots(2, 2, figsize=(14, 12))
@@ -77,4 +82,4 @@ def generator(offsetImagesFolder, PTCPointsFolder, flatFieldsFolder):
     fig.subplots_adjust(wspace=0.3, hspace=0.3, bottom=0.15)
     plt.show()
 #function call to run program, insert correct folder paths
-#generator(<path_to_offsets>, <path_to_illuminated_images>, <path_to_flats>)
+#generator(<path_to_offsets>, <path_to_illuminated_images>, <path_to_flats>, (rowStart, rowEnd), (colStart, colEnd))
